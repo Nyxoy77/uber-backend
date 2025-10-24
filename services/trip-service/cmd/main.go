@@ -1,31 +1,30 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"ride-sharing/services/trip-service/internal/domain"
+	"log"
+	"ride-sharing/services/trip-service/internal/infrastructure/http"
 	"ride-sharing/services/trip-service/internal/infrastructure/repository"
 	"ride-sharing/services/trip-service/internal/service"
-	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	inmem := repository.NewInmemRepository()
 	svc := service.NewService(inmem)
-	fare := &domain.RideFareModel{
-		ID: primitive.NewObjectID(),
-	}
-	_, err := svc.CreateTrip(context.TODO(), fare)
-	if err != nil {
-		fmt.Println("An error occured ", err)
+	// fare := &domain.RideFareModel{
+	// 	ID: primitive.NewObjectID(),
+	// }
+
+	router := gin.Default()
+
+	httpHandler := http.HttpHandler{Service: svc}
+	router.POST("/preview", httpHandler.HandleTripPreview)
+
+	if err := router.Run(); err != nil {
+		log.Println("error running the http server")
 		return
 	}
-	fmt.Println("Trip created with ID : ", fare.ID)
+	// router.Run()
 
-	for {
-		// fmt.Println("Listening to the server ")
-		time.Sleep(5 * time.Minute)
-	}
 }
