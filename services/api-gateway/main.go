@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
+	"ride-sharing/services/api-gateway/routes"
 	"ride-sharing/shared/env"
+
+	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -13,11 +17,16 @@ var (
 
 func main() {
 	log.Println("Starting API Gateway")
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello from API Gateway"))
+	router := gin.Default()
+	router.NoMethod(func(c *gin.Context) {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{
+			"error": "method not allowed",
+		})
 	})
-
-	http.ListenAndServe(httpAddr, nil)
+	router.POST("/trip/preview", routes.TripPreviewHandler)
+	// router.GET()
+	fmt.Println("Hello")
+	if err := router.Run(httpAddr); err != nil {
+		log.Fatalf("error starting the server %v", err)
+	}
 }
