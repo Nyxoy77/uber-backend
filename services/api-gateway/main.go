@@ -1,9 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"ride-sharing/services/api-gateway/routes"
 	"ride-sharing/shared/env"
@@ -25,8 +29,33 @@ func main() {
 	})
 	router.POST("/trip/preview", routes.TripPreviewHandler)
 	// router.GET()
-	fmt.Println("Hello")
-	if err := router.Run(httpAddr); err != nil {
-		log.Fatalf("error starting the server %v", err)
+
+	server := &http.Server{
+		Addr:    httpAddr,
+		Handler: router,
 	}
+
+	serverErrorChan := make(chan error, 1)
+	signalChan := make(chan os.Signal, 1)
+	go func() {
+		serverErrorChan <- server.ListenAndServe()
+	}()
+
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case err := <-serverErrorChan:
+		log.Printf("error occured starting the server %v :", err)
+	case sig := <-signalChan:
+		log.Printf("recieved signal : %v ", sig)
+		log.Print("shutting down gracefully")
+
+		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("cannot gracefull shutdown error : %v ", err)
+			server.Close()
+		}
+	}
+	log.Println("gracefull shutdown completed")
 }

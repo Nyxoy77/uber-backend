@@ -29,10 +29,9 @@ func main() {
 	router.POST("/preview", httpHandler.HandleTripPreview)
 
 	server := &stdhttp.Server{
-		Addr:    "8080",
+		Addr:    ":8083",
 		Handler: router,
 	}
-
 	serverChannel := make(chan error, 1)
 
 	go func() {
