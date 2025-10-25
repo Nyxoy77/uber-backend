@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"ride-sharing/services/api-gateway/routes"
+	ws "ride-sharing/services/api-gateway/websockets"
 	"ride-sharing/shared/env"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +29,16 @@ func main() {
 			"error": "method not allowed",
 		})
 	})
+	// Cors
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"*"}
+	config.AllowCredentials = true
+	config.AddAllowHeaders("Content-Type", "Authorization")
+	router.Use(cors.New(config))
+
 	router.POST("/trip/preview", routes.TripPreviewHandler)
+	router.GET("/ws/riders", ws.HandleRiderWebSocket)
+	router.GET("/ws/drivers", ws.HandleDriverWebSocket)
 	// router.GET()
 
 	server := &http.Server{

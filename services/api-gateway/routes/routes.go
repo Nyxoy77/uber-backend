@@ -28,3 +28,4 @@ func TripPreviewHandler(c *gin.Context) {
 	obj := contracts.APIResponse{Data: "ok"}
 	writer.WriteSuccess(c, 200, obj)
 }
+
